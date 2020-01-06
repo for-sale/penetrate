@@ -10,3 +10,6 @@ web = Blueprint('web', __name__, url_prefix="/api-v1")
 
 
 from . import situation
+from . import proportion
+from . import top_type
+from . import utils
