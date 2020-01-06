@@ -1,0 +1,4 @@
+/.idea/
+/test/
+__pycache__
+fisher.sql
