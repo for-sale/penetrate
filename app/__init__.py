@@ -3,6 +3,7 @@ from flask import Flask
 import logging
 from logging.handlers import RotatingFileHandler
 from app.models.base import db
+from flask_cors import *
 
 
 def create_app():
@@ -16,6 +17,8 @@ def create_app():
     db.create_all(app=app)
     # 注册logger
     register_logger(app=app)
+    # 解决跨域
+    CORS(app, supports_credentials=True)
 
     return app
 

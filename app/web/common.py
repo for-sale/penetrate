@@ -1,5 +1,19 @@
 import time
-from datetime import datetime
+from datetime import datetime, date, timedelta
+
+PRINTER_TYPE = ["N1", "N2", "Pro2", "Pro2 Plus", "Unknown"]
+
+SOFTWARE = ["printing settings\n打印设置",
+            "raisetouch&firmware触屏及固件",
+            "request(im/raisetuch/hardware)",
+            "ideamaker instruction",
+            "wi-fi",
+            "3rd party filament recommendation",
+            "serial number",
+            "full size out of print bed\n打印尺寸超出热床",
+            "uneven extrusion on raft \nraft 挤出的不平整"]
+
+SOFTWARE_ID = [16, 1, 118, 115, 51, 117, 120, 24, 35]
 
 
 def str_2_timestamp(str_time):
@@ -41,7 +55,6 @@ def issue_type_2_id(issue_type):
     :param issue_type:  list [Jam, Cabe lose, ]
     :return: list [id1, id2]
     """
-    
 
 
 # data = str_2_weeks("20200103")
@@ -65,3 +78,16 @@ def issue_type_2_id(issue_type):
 # timeArray = time.localtime(timeStamp)
 # otherStyleTime = time.strftime("%Y-%m-%d", timeArray)
 # print(otherStyleTime)
+
+
+def last_few_days(n):
+    """
+    获取n天前和此刻的时间戳
+    :param n:
+    :return: stamp -> last few days, now
+    """
+    today = date.today()
+    before_day = today - timedelta(days=n)
+    start_time = int(time.mktime(time.strptime(str(before_day), '%Y-%m-%d')))*1000
+    end_time = int(time.time())*1000
+    return start_time, end_time

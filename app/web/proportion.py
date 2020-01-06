@@ -6,8 +6,9 @@ from flask import current_app, Response, request
 from .common import PRINTER_TYPE
 
 
-@web.route('/proportion', methods=["GET"])
+@web.route('/proportion', methods=["POST"])
 def proportion():
+    current_app.logger.info("/api-v1/proportion")
     # ware_type = request.form.get("ware_type")
     # ware_type1 = request.args.get("ware_type")
     # print(ware_type)
@@ -34,8 +35,6 @@ def proportion():
 
     for k, v in types_counts_dic.items():
         v["percent"] = float("%.2f" % (v["counts"] / total))
-
-    current_app.logger.info("请求proportion数据")
 
     res_dic = {}
     res_dic["data"] = list(types_counts_dic.values())
