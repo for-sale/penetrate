@@ -15,6 +15,25 @@ SOFTWARE = ["printing settings\n打印设置",
 
 SOFTWARE_ID = [16, 1, 118, 115, 51, 117, 120, 24, 35]
 
+ISSUE_TYPE = {1: 'RaiseTouch & Firmwares', 2: 'Broken/Loose Ribbon Cable', 3: 'No response to Touch', 4: 'Jam/Clogging',
+              5: 'Loose Connection/ Broken Cables', 6: 'Broken PSU', 7: 'Cracked PC Covers',
+              8: 'Shipping Stripe Loose ', 9: 'Gantry Mis-Aligned', 10: 'Broken LED Stripe',
+              11: 'Side Door Mis-Aligned with Frame', 12: 'Broken Flash Drive', 13: 'Scratches on Front Door',
+              14: 'Camrea Out Of Focuse', 15: 'Lack of Information', 16: 'Printing Settings',
+              17: 'Scraches on Build Surface', 18: 'Filament Run-out Sensor Mis-Triggered', 19: 'Printer Swap',
+              20: 'Feeding Tube Scratching Top Cover', 21: 'No Extrusion', 22: 'Broken Coupler', 23: 'Weird Noise',
+              24: 'Full Size Printing Out of Build Plate', 25: 'Extruder Motor Overheated', 26: 'Loose Screws',
+              27: 'Gantry Binding', 28: 'Hotend', 29: 'Offset Calibration', 30: 'Builtak/ Heated Bed',
+              31: 'Broken Screen Controller Board', 32: 'Wavy Texture in Z Direction',
+              33: 'Nozzle Temperature Fluctuation', 34: '?', 35: 'Uneven First Layer', 36: 'Un-leveled Bed',
+              37: 'Broken Z Limit Switch', 38: 'Ethernet', 39: 'Rusty Rod', 40: 'Weird Lines on Model',
+              41: 'Nozzle Jogging', 42: 'Motion Controller Board', 43: 'Heated Bed Connecting Terminal Block',
+              44: 'Thermocoupler', 45: 'Sliding Block', 46: 'Fans', 47: 'Missing Accessory Tools', 48: 'Shipping',
+              49: 'Heater Rod', 50: 'Motor', 51: 'Wi-Fi', 115: 'Using ideaMaker', 116: 'power supply filter failed',
+              117: '3rd Party Filament', 118: 'Feature Request', 119: 'Filament Run-Out Sensor', 120: 'Serial Number',
+              121: 'Thread/ Screws Worn Out', 122: 'Filament', 123: 'Touchscreen ', 124: 'EndStop', 125: 'Camera',
+              126: 'Coupler', 127: 'Bed Adhesion/ Not Sticking'}
+
 
 def str_2_timestamp(str_time):
     """
@@ -88,6 +107,44 @@ def last_few_days(n):
     """
     today = date.today()
     before_day = today - timedelta(days=n)
-    start_time = int(time.mktime(time.strptime(str(before_day), '%Y-%m-%d')))*1000
-    end_time = int(time.time())*1000
+    start_time = int(time.mktime(time.strptime(str(before_day), '%Y-%m-%d'))) * 1000
+    end_time = int(time.time()) * 1000
     return start_time, end_time
+
+
+# def get_week_number(dt):
+#     """get both year and week number of a specified date object
+#
+#     :param dt: date or datetime object which you want to corresponding get week number
+#     :return: a tuple including both year and week number. (year, week_num)
+#     """
+#     year = dt.year
+#     month = dt.month
+#     week_num = int(dt.strftime("%V"))
+#     if month == 12 and week_num == 1:
+#         return year + 1, week_num
+#     return year, week_num
+
+
+def get_year_week(start_time, end_time):
+    """
+    获取 1905 格式的日期
+    :param start_time: "2019-05"
+    :param end_time: "2019-45"
+    :return: yearweek(1905) -> start_time end_time
+    """
+    s_tup = start_time.split("-")
+    end_tup = end_time.split("-")
+    s_time = s_tup[0][2:4] + s_tup[1]
+    e_time = end_tup[0][2:4] + end_tup[1]
+    return s_time, e_time
+
+
+def id_2_type(t_id):
+    """
+    根据分类id获取问题分类名称
+    :param t_id: type_id
+    :return: issue_type
+    """
+    i_type = ISSUE_TYPE.get(t_id)
+    return i_type

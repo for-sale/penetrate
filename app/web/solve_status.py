@@ -13,14 +13,16 @@ from pandas import DataFrame
 
 @web.route("/solve_status", methods=["POST"])
 def solve_status():
-    n = request.form.get("duration")
-    print(n)
+    n = request.form.get("length")
+    if not n:
+        n = 0
     if int(n):
+        print(".......", n)
         start_time, end_time = last_few_days(int(n))
-        print(start_time, end_time)
         status_data = db.session.query(Content.status_id, db.func.count(Content.id)).filter(
             Content.as_date.between(start_time, end_time)).group_by(Content.status_id).all()
     else:
+        print("++++++", n)
         status_data = db.session.query(Content.status_id, db.func.count(Content.id)).group_by(Content.status_id).all()
     dic_status_data = {93: {"status_id": 93, "counts": 0, "percent": 0}}
     if status_data:

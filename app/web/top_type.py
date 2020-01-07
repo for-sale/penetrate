@@ -4,9 +4,9 @@ from app.models.issue import Issue
 from app.models.content import Content
 from app.models.setting import Setting
 from app.models.base import db
-from flask import current_app, Response, request, jsonify
+from flask import current_app, Response, request
 from .common import PRINTER_TYPE
-from .utils import type_sorted
+from .utils import type_sorted, jsonify
 from pandas import DataFrame
 
 
@@ -19,8 +19,8 @@ def top_type():
     for type_id in sorted_type_id:
         total = 0
         types_counts_dic = {}
-        for type in PRINTER_TYPE:
-            types_counts_dic[type] = {"printer_type": type, "counts": 0, "percent": 0}
+        for p_type in PRINTER_TYPE:
+            types_counts_dic[p_type] = {"printer_type": p_type, "counts": 0, "percent": 0}
         top_type_dic[type_id] = types_counts_dic
         issue_type = db.session.query(Content.printer_type, db.func.count(Content.id)).filter(
             Content.issue_type_id == type_id).group_by(Content.printer_type).all()
@@ -38,12 +38,14 @@ def top_type():
                 top_type_dic[type_id]["Pro2 Plus"]["counts"] += res[1]
         for v in top_type_dic[type_id].values():
             v["percent"] = float("%.2f" % (v["counts"] / total))
-    res_dic = {}
-    print(top_type_dic)
+    res_dic = {"data": []}
+    index = 0
     for k, v in top_type_dic.items():
-        res_dic[k] = list(v.values())
-    # print(res_dic)
-    return Response(json.dumps(res_dic), mimetype='application/json')
+        t_dic = {"id": k, "index": index, "counts":list(v.values())}
+        res_dic["data"].append(t_dic)
+        index += 1
+    return jsonify(res_dic), 200, {'ContentType': 'application/json'}
+    # return Response(json.dumps(res_dic), mimetype='application/json')
 
 
 @web.route("/top_type_detail", methods=["POST"])
@@ -68,9 +70,10 @@ def top_type_data():
     df.loc['category_counts'] = df.apply(lambda x: x.sum())
     df.sort_values(by='category_counts', axis=1, inplace=True, ascending=False)
     c_l = df.columns.values.tolist()
-    res_dic = {"data": {}}
+    res_dic = {"data": []}
     res_dic["printerTypes"] = df.index.values.tolist()
-    for i in c_l:
-        df[i].fillna(0, inplace=True)
-        res_dic["data"][i] = df[i].tolist()
-    return Response(json.dumps(res_dic), mimetype='application/json')
+    for i_index, i_counts in enumerate(c_l):
+        df[i_counts].fillna(0, inplace=True)
+        l_dic = {"id": i_counts, "index": i_index, "counts": df[i_counts].tolist()}
+        res_dic["data"].append(l_dic)
+    return jsonify(res_dic), 200, {'ContentType': 'application/json'}
