@@ -1,11 +1,9 @@
 from . import web
-import time
-import collections
-from flask import current_app, request, jsonify
-import sqlalchemy
-from sqlalchemy import or_, and_, func
+from flask import request, jsonify
+from sqlalchemy import and_
 from app.models.content import Content
-from app.web.common import str_2_timestamp, str_2_weeks, timestamp_to_str, week_2_day
+from app.web.common import str_2_timestamp, str_2_weeks, timestamp_to_str, \
+    week_2_day, id_2_type
 
 
 @web.route('/situation/detail', methods=["POST"])
@@ -34,11 +32,11 @@ def situation_detail():
         return jsonify(data)
 
     if produce_time:
-        data = produce_data(produce_time, printer_type, issue_type)
+        data = produce_data(produce_time, printer_type, issue_type, start, length)
         return jsonify(data)
 
     if time_interval:
-        data = interval_data(time_interval, printer_type, issue_type)
+        data = interval_data(time_interval, printer_type, issue_type, start, length)
         return jsonify(data)
     # return 'this is a situation test ^_^'
 
@@ -59,7 +57,7 @@ def interval_data(time_interval, printer_type, issue_type, start, length):
     end_year, end_week = str_2_weeks(time_interval[1])
     start_compare = start_year * 100 + start_week
     end_compare = end_year * 100 + end_week
-    content = Content.query.filter(
+    content = Content.query.filter(Content.issue_type_id.in_(issue_type),
                                    and_(Content.produce_year * 100 + Content.as_cycle) > start_compare,
                                    Content.produce_year * 100 + Content.as_cycle < end_compare).all()
 
@@ -75,7 +73,7 @@ def interval_data(time_interval, printer_type, issue_type, start, length):
                     "as_date": timestamp_to_str(data.as_date) if data.as_date else "",
                     "serial_no": data.serial_no if data.serial_no else "",
                     "issue": data.issue_content if data.issue_content else "",
-                    "issue_type": "",
+                    "issue_type": id_2_type(data.issue_type_id) if data.issue_type_id else "",
                     "printer_type": data.printer_type if data.printer_type else "Unknown",
                     "time_internal": data.as_cycle if data.as_cycle else "",
                     "produce_year": data.produce_year if data.produce_year else ""
@@ -106,7 +104,7 @@ def produce_data(produce_time, printer_type, issue_type, start, length):
                     "as_date": timestamp_to_str(data.as_date) if data.as_date else "",
                     "serial_no": data.serial_no if data.serial_no else "",
                     "issue": data.issue_content if data.issue_content else "",
-                    "issue_type": "",
+                    "issue_type": id_2_type(data.issue_type_id) if data.issue_type_id else "",
                     "printer_type": data.printer_type if data.printer_type else "Unknown",
                     "time_internal": data.as_cycle if data.as_cycle else "",
                     "produce_year": data.produce_year if data.produce_year else ""
@@ -135,7 +133,7 @@ def report_data(report_time, printer_type, issue_type, start, length):
                     "as_date": timestamp_to_str(data.as_date) if data.as_date else "",
                     "serial_no": data.serial_no if data.serial_no else "",
                     "issue": data.issue_content if data.issue_content else "",
-                    "issue_type": "",
+                    "issue_type": id_2_type(data.issue_type_id) if data.issue_type_id else "",
                     "printer_type": data.printer_type if data.printer_type else "Unknown",
                     "time_internal": data.as_cycle if data.as_cycle else "",
                     "produce_year": data.produce_year if data.produce_year else ""
