@@ -84,7 +84,7 @@ def week_2_day(serial_no):
             struct_time = time.strptime(year_week, '%Y-%W-%w')
             mon_day = time.strftime("%Y%m%d", struct_time)
             return mon_day
-    return False
+    return "20190304"
 
 # data = str_2_weeks("20200103")
 # print(data)

@@ -18,7 +18,7 @@ def situation_detail():
     # 20180203换算成周
     produce_time = data["produce_time"] if "produce_time" in data else []
     # 20180203  20180204
-    time_interval = data["time_interval"] if "produce_time" in data else []
+    time_interval = data["time_interval"] if "time_interval" in data else []
 
     start = data["start"]
     length = data["length"]
