@@ -76,6 +76,16 @@ def issue_type_2_id(issue_type):
     """
 
 
+def week_2_day(serial_no):
+    if len(serial_no) == 11:
+        yw = str(serial_no)[4:8]
+        if yw.startswith('1') or yw.startswith('2'):
+            year_week = "20" + yw[0:2] + "-" + yw[2:4] + "-" + "1"
+            struct_time = time.strptime(year_week, '%Y-%W-%w')
+            mon_day = time.strftime("%Y%m%d", struct_time)
+            return mon_day
+    return False
+
 # data = str_2_weeks("20200103")
 # print(data)
 # import time
