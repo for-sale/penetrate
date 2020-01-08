@@ -1,5 +1,5 @@
 import time
-from datetime import datetime, date, timedelta
+from datetime import date, timedelta
 
 PRINTER_TYPE = ["N1", "N2", "Pro2", "Pro2 Plus", "Unknown"]
 
@@ -61,11 +61,15 @@ def str_2_weeks(str_time):
     :param str_time:  "20180411"
     :return:  int -> year week
     """
-    year = int(str_time[:4])
-    month = int(str_time[4:6])
-    day = int(str_time[6:8])
-    tmp = datetime(year, month, day).isocalendar()
-    return tmp[0], tmp[1]
+    # year = int(str_time[:4])
+    # month = int(str_time[4:6])
+    # day = int(str_time[6:8])
+    # tmp = datetime(year, month, day).isocalendar()
+    # return tmp[0], tmp[1]
+    time_array = time.strptime(str_time, "%Y%m%d")  # 把时间字符串 格式化成 时间数组
+    year = time.strftime("%Y", time_array)
+    week = time.strftime("%W", time_array)
+    return int(year), int(week)
 
 
 def issue_type_2_id(issue_type):
@@ -85,28 +89,6 @@ def week_2_day(serial_no):
             mon_day = time.strftime("%Y%m%d", struct_time)
             return mon_day
     return "20190101"
-
-# data = str_2_weeks("20200103")
-# print(data)
-# import time
-#
-# a1 = "2018-04-11"
-# # 先转换为时间数组
-# timeArray = time.strptime(a1, "%Y-%m-%d")
-#
-# # 转换为时间戳
-# timeStamp = int(time.mktime(timeArray))
-# print(timeStamp)
-
-
-# # time.strftime('%Y-%m-%d',time.localtime(timestamp/1000))
-# # print(len("1523376000000"))
-#
-#
-# timeStamp = 1523376000000/1000
-# timeArray = time.localtime(timeStamp)
-# otherStyleTime = time.strftime("%Y-%m-%d", timeArray)
-# print(otherStyleTime)
 
 
 def last_few_days(n):
@@ -158,25 +140,3 @@ def id_2_type(t_id):
     """
     i_type = ISSUE_TYPE.get(t_id)
     return i_type
-
-# 
-# def stamp_2_week(year_week):
-#     struct_time = time.strptime(year_week, '%Y%W%w')
-#     mon_day = time.strftime("%Y%m%d", struct_time)
-#     return mon_day
-# 
-# print(stamp_2_week("202021"))
-# 
-# print(week_2_day("10152002011"))
-# 
-# def stamp_2_week(time_stamp):
-#     # 实践戳 -> 20180803
-#     str_time = timestamp_to_str(time_stamp)
-#     year, week = str_2_weeks(str_time)
-#     year_week = str(year) + "-" + str(week) + "-" + str(1)
-#     struct_time = time.strptime(year_week, '%Y-%W-%w')
-#     mon_day = time.strftime("%Y%m%d", struct_time)
-#     return mon_day
-# 
-# print(stamp_2_week("1578412800000"))
-# print(str_2_timestamp("20200108"))

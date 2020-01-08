@@ -1,7 +1,6 @@
 from . import web
 import time
 import json
-import collections
 from flask import request, jsonify, Response
 from app.models.content import Content
 from app.web.common import str_2_timestamp, str_2_weeks, timestamp_to_str, week_2_day
@@ -225,9 +224,6 @@ def report_data(report_time, printer_type, issue_type):
                                    Content.as_date < end_time).order_by(
                                    Content.as_date.asc()).all()
 
-    # for data in content:
-    #     print(data.printer_type)
-
     # 确定筛选的打印机类型
     printer_dict = dict()
     # printer_dict = collections.OrderedDict()
@@ -322,9 +318,6 @@ def report_data(report_time, printer_type, issue_type):
     return data_list
 
 
-# @web.route('/situation/detail', methods=["POST"])
-# def situation_detail():
-#
 #     # 详情字段
 #     detail_data = {
 #                 "as_date": "",
@@ -341,54 +334,3 @@ def report_data(report_time, printer_type, issue_type):
 #     # res = Issue.query.all()
 #     # user = Issue.query.filter_by(id=2).first()
 #     content = Content.query.filter_by(id=2).first()
-#     #
-#     # Content.query.join(followers, (followers.c.followed_id == Post.user_id))
-#     print(content.as_date)
-#     current_app.logger.info("this is log ...22222")
-#
-#     # 软硬件筛选
-#     content = Content.query.filter(Content.printer_type.in_(["Pro2", "Pro2 Plus"])).all()
-#     # Content.printer_type in )
-#     print(content)
-#
-#     # logger.info("get user data success ...".format(content.as_date))
-#     return 'this is a situation test ^_^'
-
-    # if produce_time or time_interval:
-    #     start_year, start_week = str_2_weeks(produce_time[0])
-    #     end_year, end_week = str_2_weeks(produce_time[1])
-    #     start_compare = start_year * 100 + start_week
-    #     end_compare = end_year * 100 + end_week
-    #     content = Content.query.filter(Content.printer_type.in_([""]),
-    #                                    Content.issue_type_id.in_(issue_type),
-    #                                    and_(Content.produce_year * 100 + Content.produce_week) > start_compare,
-    #                                    Content.produce_year * 100 + Content.produce_week < end_compare).order_by(
-    #                                    Content.as_date.asc()).all()
-    #     for key in content:
-    #         print(key.as_date)
-
-    # if time_interval:
-    #     start_year, start_week = str_2_weeks(produce_time[0])
-    #     end_year, end_week = str_2_weeks(produce_time[1])
-    #     content = Content.query.filter(Content.printer_type.in_(printer_type),
-    #                                    Content.issue_type_id.in_(issue_type),
-    #                                    and_(Content.produce_year * 1000))
-
-    # content = Content.query.filter(Content.printer_type.in_(["Pro2", "Pro2 Plus"]),
-    #                                Content.issue_type_id.in_([3, 4]),
-    #                                Content.as_date > 1523376000000,
-    #                                or_(and_(Content.produce_year > 2018, Content.produce_week > 10),
-    #                                    Content.produce_year > 2019),
-    #                                Content.as_cycle > 5).all()
-    # print(content)
-
-    # # 格式化数据
-    # data_list = []
-    # for cur_printer_type in printer_dict:
-    #     if printer_dict[cur_printer_type]:
-    #         for date, value in printer_dict[cur_printer_type].items():
-    #             cur_dict = {"type": cur_printer_type, "date": date, "value": value}
-    #             data_list.append(cur_dict)
-    #     # else:
-    #     #     cur_dict = {"type": cur_printer_type, "date": "", "value": 0}
-    #     #     data_list.append(cur_dict)
