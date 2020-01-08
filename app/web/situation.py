@@ -43,8 +43,8 @@ def interval_data(time_interval, printer_type, issue_type):
     start_compare = start_year * 100 + start_week
     end_compare = end_year * 100 + end_week
     content = Content.query.filter(Content.issue_type_id.in_(issue_type),
-                                   and_(Content.produce_year * 100 + Content.as_cycle) > start_compare,
-                                   Content.produce_year * 100 + Content.as_cycle < end_compare).all()
+                                   (Content.produce_year * 100 + Content.produce_week) > start_compare,
+                                   (Content.produce_year * 100 + Content.produce_week) < end_compare).all()
 
     # 确定筛选的打印机类型
     printer_dict = dict()
@@ -56,20 +56,33 @@ def interval_data(time_interval, printer_type, issue_type):
         cur_type = data.printer_type
         as_cycle = data.as_cycle
         if cur_type in printer_dict.keys():
-            if as_cycle:
-                cur_date = str(data.produce_year * 100 + data.as_cycle)
-                if cur_date in printer_dict[cur_type].keys():
-                    printer_dict[cur_type][cur_date] += 1
+            if as_cycle and as_cycle > 0:
+                # cur_date = str(data.produce_year * 100 + data.as_cycle)
+                if as_cycle in printer_dict[cur_type].keys():
+                    printer_dict[cur_type][as_cycle] += 1
                 else:
-                    printer_dict[cur_type][cur_date] = 1
+                    printer_dict[cur_type][as_cycle] = 1
+
+        if cur_type in ["N2S", "N2P(S)", "N2P(D)", "N2(S)", "N2(D)"] and "N2" in printer_dict.keys():
+            if as_cycle and as_cycle > 0:
+                if as_cycle in printer_dict["N2"].keys():
+                    printer_dict["N2"][as_cycle] += 1
+                else:
+                    printer_dict["N2"][as_cycle] = 1
+
+        if cur_type in ["N1(D)", "N1(S)"] and "N1" in printer_dict.keys():
+            if as_cycle and as_cycle > 0:
+                if as_cycle in printer_dict["N1"].keys():
+                    printer_dict["N1"][as_cycle] += 1
+                else:
+                    printer_dict["N1"][as_cycle] = 1
 
         if cur_type is None and "Unknown" in printer_dict.keys():
             if as_cycle:
-                cur_date = str(data.produce_year * 100 + data.as_cycle)
-                if cur_date in printer_dict["Unknown"].keys():
-                    printer_dict["Unknown"][cur_date] += 1
+                if as_cycle in printer_dict["Unknown"].keys():
+                    printer_dict["Unknown"][as_cycle] += 1
                 else:
-                    printer_dict["Unknown"][cur_date] = 1
+                    printer_dict["Unknown"][as_cycle] = 1
 
     # 获取所有可能的键值
     effective_key = set()
@@ -111,8 +124,8 @@ def produce_data(produce_time, printer_type, issue_type):
     start_compare = start_year * 100 + start_week
     end_compare = end_year * 100 + end_week
     content = Content.query.filter(Content.issue_type_id.in_(issue_type),
-                                   and_(Content.produce_year * 100 + Content.produce_week) > start_compare,
-                                   Content.produce_year * 100 + Content.produce_week < end_compare).all()
+                                   (Content.produce_year * 100 + Content.produce_week) > start_compare,
+                                   (Content.produce_year * 100 + Content.produce_week) < end_compare).all()
 
     # 确定筛选的打印机类型
     printer_dict = dict()
@@ -130,6 +143,22 @@ def produce_data(produce_time, printer_type, issue_type):
                     printer_dict[cur_type][cur_date] += 1
                 else:
                     printer_dict[cur_type][cur_date] = 1
+
+        if cur_type in ["N2S", "N2P(S)", "N2P(D)", "N2(S)", "N2(D)"] and "N2" in printer_dict.keys():
+            if serial_no:
+                cur_date = week_2_day(serial_no)
+                if cur_date in printer_dict["N2"].keys():
+                    printer_dict["N2"][cur_date] += 1
+                else:
+                    printer_dict["N2"][cur_date] = 1
+
+        if cur_type in ["N1(D)", "N1(S)"] and "N1" in printer_dict.keys():
+            if serial_no:
+                cur_date = week_2_day(serial_no)
+                if cur_date in printer_dict["N1"].keys():
+                    printer_dict["N1"][cur_date] += 1
+                else:
+                    printer_dict["N1"][cur_date] = 1
 
         if cur_type is None and "Unknown" in printer_dict.keys():
             if serial_no:
@@ -216,6 +245,21 @@ def report_data(report_time, printer_type, issue_type):
                     printer_dict[cur_type][cur_date] += 1
                 else:
                     printer_dict[cur_type][cur_date] = 1
+        if cur_type in ["N2S", "N2P(S)", "N2P(D)", "N2(S)", "N2(D)"] and "N2" in printer_dict.keys():
+            if data.as_date:
+                cur_date = timestamp_to_str(data.as_date)
+                if cur_date in printer_dict["N2"].keys():
+                    printer_dict["N2"][cur_date] += 1
+                else:
+                    printer_dict["N2"][cur_date] = 1
+
+        if cur_type in ["N1(D)", "N1(S)"] and "N1" in printer_dict.keys():
+            if data.as_date:
+                cur_date = timestamp_to_str(data.as_date)
+                if cur_date in printer_dict["N1"].keys():
+                    printer_dict["N1"][cur_date] += 1
+                else:
+                    printer_dict["N1"][cur_date] = 1
 
         if cur_type is None and "Unknown" in printer_dict.keys():
             if data.as_date:

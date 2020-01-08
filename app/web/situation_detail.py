@@ -52,21 +52,33 @@ def situation_detail():
 #             }
 
 
+def get_real_printer_type(printer_type):
+    sub_printer_type = list()
+    for key in printer_type:
+        if key == "Unknown":
+            sub_printer_type.append(None)
+            continue
+        if key == "N2":
+            sub_printer_type.extend(["N2S", "N2P(S)", "N2P(D)", "N2(S)", "N2(D)"])
+            continue
+        if key == "N1":
+            sub_printer_type.extend(["N1(D)", "N1(S)"])
+            continue
+        sub_printer_type.append(key)
+    return sub_printer_type
+
+
 def interval_data(time_interval, printer_type, issue_type, start, length):
     start_year, start_week = str_2_weeks(time_interval[0])
     end_year, end_week = str_2_weeks(time_interval[1])
     start_compare = start_year * 100 + start_week
     end_compare = end_year * 100 + end_week
     content = Content.query.filter(Content.issue_type_id.in_(issue_type),
-                                   and_(Content.produce_year * 100 + Content.as_cycle) > start_compare,
-                                   Content.produce_year * 100 + Content.as_cycle < end_compare).all()
+                                   (Content.produce_year * 100 + Content.as_cycle) > start_compare,
+                                   (Content.produce_year * 100 + Content.as_cycle) < end_compare).all()
 
     res_list = list()
-    sub_printer_type = list()
-    for key in printer_type:
-        if key == "Unknown":
-            sub_printer_type.append(None)
-        sub_printer_type.append(key)
+    sub_printer_type = get_real_printer_type(printer_type)
     for data in content:
         if data.printer_type in sub_printer_type:
             sub_dict = {
@@ -75,7 +87,7 @@ def interval_data(time_interval, printer_type, issue_type, start, length):
                     "issue": data.issue_content if data.issue_content else "",
                     "issue_type": id_2_type(data.issue_type_id) if data.issue_type_id else "",
                     "printer_type": data.printer_type if data.printer_type else "Unknown",
-                    "time_internal": data.as_cycle if data.as_cycle else "",
+                    "time_internal": data.as_cycle if data.as_cycle and data.as_cycle > 0 else "",
                     "produce_year": data.produce_year if data.produce_year else ""
                 }
             res_list.append(sub_dict)
@@ -93,11 +105,7 @@ def produce_data(produce_time, printer_type, issue_type, start, length):
                                    Content.produce_year * 100 + Content.produce_week < end_compare).all()
 
     res_list = list()
-    sub_printer_type = list()
-    for key in printer_type:
-        if key == "Unknown":
-            sub_printer_type.append(None)
-        sub_printer_type.append(key)
+    sub_printer_type = get_real_printer_type(printer_type)
     for data in content:
         if data.printer_type in sub_printer_type:
             sub_dict = {
@@ -122,11 +130,7 @@ def report_data(report_time, printer_type, issue_type, start, length):
                                    Content.as_date < end_time).order_by(
                                    Content.as_date.asc()).all()
     res_list = list()
-    sub_printer_type = list()
-    for key in printer_type:
-        if key == "Unknown":
-            sub_printer_type.append(None)
-        sub_printer_type.append(key)
+    sub_printer_type = get_real_printer_type(printer_type)
     for data in content:
         if data.printer_type in sub_printer_type:
             sub_dict = {
