@@ -1,6 +1,8 @@
 from . import web
-from flask import request, jsonify
-from sqlalchemy import and_
+import time
+import json
+import collections
+from flask import request, jsonify, Response
 from app.models.content import Content
 from app.web.common import str_2_timestamp, str_2_weeks, timestamp_to_str, week_2_day
 
@@ -20,21 +22,24 @@ def situation():
     time_interval = data["time_interval"] if "time_interval" in data else []
 
     if not printer_type or not issue_type:
-        return jsonify({"status": "failed", "msg": "missing required parameters printer type or issue type"}), 200, \
-               {'ContentType': 'application/json'}
+        data = {"status": "failed", "msg": "missing required parameters printer type or issue type"}
+        return Response(json.dumps(data), mimetype='application/json')
 
     if report_time:
         data = report_data(report_time, printer_type, issue_type)
-        return jsonify(data)
+        return Response(json.dumps(data), mimetype='application/json')
+        # return jsonify(data), 200, {'ContentType': 'application/json'}
 
     if produce_time:
         data = produce_data(produce_time, printer_type, issue_type)
-        return jsonify(data)
+        return Response(json.dumps(data), mimetype='application/json')
 
     if time_interval:
         data = interval_data(time_interval, printer_type, issue_type)
-        return jsonify(data)
-    # return 'this is a situation test ^_^'
+        return Response(json.dumps(data), mimetype='application/json')
+
+    res_dic = {"data": "parameters error"}
+    return Response(json.dumps(res_dic), mimetype='application/json')
 
 
 def interval_data(time_interval, printer_type, issue_type):
@@ -88,7 +93,7 @@ def interval_data(time_interval, printer_type, issue_type):
     effective_key = set()
     for key in printer_dict.keys():
         effective_key = effective_key | set(printer_dict[key].keys())
-    print(effective_key)
+    # print(effective_key)
 
     # 键值赋值
     new_printer_dict = printer_dict
@@ -172,7 +177,7 @@ def produce_data(produce_time, printer_type, issue_type):
     effective_key = set()
     for key in printer_dict.keys():
         effective_key = effective_key | set(printer_dict[key].keys())
-    print(effective_key)
+    # print(effective_key)
 
     # 键值赋值
     new_printer_dict = printer_dict
@@ -202,18 +207,33 @@ def produce_data(produce_time, printer_type, issue_type):
     return data_list
 
 
+def stamp_2_week(time_stamp):
+    # 实践戳 -> 20180803
+    str_time = timestamp_to_str(time_stamp)
+    year, week = str_2_weeks(str_time)
+    year_week = str(year) + "-" + str(week) + "-" + str(1)
+    struct_time = time.strptime(year_week, '%Y-%W-%w')
+    mon_day = time.strftime("%Y%m%d", struct_time)
+    return mon_day
+
+
 def report_data(report_time, printer_type, issue_type):
     start_time = str_2_timestamp(report_time[0])
     end_time = str_2_timestamp(report_time[1])
     content = Content.query.filter(Content.issue_type_id.in_(issue_type),
                                    Content.as_date > start_time,
-                                   Content.as_date < end_time).all()
+                                   Content.as_date < end_time).order_by(
+                                   Content.as_date.asc()).all()
 
     # for data in content:
     #     print(data.printer_type)
 
     # 确定筛选的打印机类型
     printer_dict = dict()
+    # printer_dict = collections.OrderedDict()
+    # for printer in printer_type:
+    #     internal_dict = collections.OrderedDict()
+    #     printer_dict.update({printer: internal_dict})
     for printer in printer_type:
         printer_dict.update({printer: {}})
 
@@ -240,14 +260,14 @@ def report_data(report_time, printer_type, issue_type):
         cur_type = data.printer_type
         if cur_type in printer_dict.keys():
             if data.as_date:
-                cur_date = timestamp_to_str(data.as_date)
+                cur_date = stamp_2_week(data.as_date)
                 if cur_date in printer_dict[cur_type].keys():
                     printer_dict[cur_type][cur_date] += 1
                 else:
                     printer_dict[cur_type][cur_date] = 1
         if cur_type in ["N2S", "N2P(S)", "N2P(D)", "N2(S)", "N2(D)"] and "N2" in printer_dict.keys():
             if data.as_date:
-                cur_date = timestamp_to_str(data.as_date)
+                cur_date = stamp_2_week(data.as_date)
                 if cur_date in printer_dict["N2"].keys():
                     printer_dict["N2"][cur_date] += 1
                 else:
@@ -255,7 +275,7 @@ def report_data(report_time, printer_type, issue_type):
 
         if cur_type in ["N1(D)", "N1(S)"] and "N1" in printer_dict.keys():
             if data.as_date:
-                cur_date = timestamp_to_str(data.as_date)
+                cur_date = stamp_2_week(data.as_date)
                 if cur_date in printer_dict["N1"].keys():
                     printer_dict["N1"][cur_date] += 1
                 else:
@@ -263,7 +283,7 @@ def report_data(report_time, printer_type, issue_type):
 
         if cur_type is None and "Unknown" in printer_dict.keys():
             if data.as_date:
-                cur_date = timestamp_to_str(data.as_date)
+                cur_date = stamp_2_week(data.as_date)
                 if cur_date in printer_dict["Unknown"].keys():
                     printer_dict["Unknown"][cur_date] += 1
                 else:
@@ -273,7 +293,6 @@ def report_data(report_time, printer_type, issue_type):
     effective_key = set()
     for key in printer_dict.keys():
         effective_key = effective_key | set(printer_dict[key].keys())
-    print(effective_key)
 
     # 键值赋值
     new_printer_dict = printer_dict

@@ -1,5 +1,6 @@
 from . import web
-from flask import request, jsonify
+import json
+from flask import request, jsonify, Response
 from sqlalchemy import and_
 from app.models.content import Content
 from app.web.common import str_2_timestamp, str_2_weeks, timestamp_to_str, \
@@ -24,21 +25,23 @@ def situation_detail():
     length = data["length"]
 
     if not printer_type or not issue_type:
-        return jsonify({"status": "failed", "msg": "missing required parameters printer type or issue type"}), 200, \
-               {'ContentType': 'application/json'}
+        data = {"status": "failed", "msg": "missing required parameters printer type or issue type"}
+        return Response(json.dumps(data), mimetype='application/json')
 
     if report_time:
         data = report_data(report_time, printer_type, issue_type, start, length)
-        return jsonify(data)
+        return Response(json.dumps(data), mimetype='application/json')
 
     if produce_time:
         data = produce_data(produce_time, printer_type, issue_type, start, length)
-        return jsonify(data)
+        return Response(json.dumps(data), mimetype='application/json')
 
     if time_interval:
         data = interval_data(time_interval, printer_type, issue_type, start, length)
-        return jsonify(data)
-    # return 'this is a situation test ^_^'
+        return Response(json.dumps(data), mimetype='application/json')
+
+    res_dic = {"data": "parameters error"}
+    return Response(json.dumps(res_dic), mimetype='application/json')
 
 #     # 详情字段
 #     detail_data = {
