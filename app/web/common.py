@@ -84,7 +84,7 @@ def week_2_day(serial_no):
             struct_time = time.strptime(year_week, '%Y-%W-%w')
             mon_day = time.strftime("%Y%m%d", struct_time)
             return mon_day
-    return "20190304"
+    return "20190101"
 
 # data = str_2_weeks("20200103")
 # print(data)
@@ -158,3 +158,25 @@ def id_2_type(t_id):
     """
     i_type = ISSUE_TYPE.get(t_id)
     return i_type
+
+#
+# def stamp_2_week(year_week):
+#     struct_time = time.strptime(year_week, '%Y%W%w')
+#     mon_day = time.strftime("%Y%m%d", struct_time)
+#     return mon_day
+# 
+# print(stamp_2_week("202021"))
+#
+# print(week_2_day("10152002011"))
+#
+# def stamp_2_week(time_stamp):
+#     # 实践戳 -> 20180803
+#     str_time = timestamp_to_str(time_stamp)
+#     year, week = str_2_weeks(str_time)
+#     year_week = str(year) + "-" + str(week) + "-" + str(1)
+#     struct_time = time.strptime(year_week, '%Y-%W-%w')
+#     mon_day = time.strftime("%Y%m%d", struct_time)
+#     return mon_day
+#
+# print(stamp_2_week("1578412800000"))
+# print(str_2_timestamp("20200108"))
