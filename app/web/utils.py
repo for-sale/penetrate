@@ -15,7 +15,6 @@ def type_sorted():
     sorted_type_id = []
     for p_type in printer_types:
         sorted_type_id.append(p_type[0])
-    print(sorted_type_id)
     return sorted_type_id
 
 

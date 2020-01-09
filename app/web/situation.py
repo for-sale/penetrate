@@ -1,7 +1,7 @@
 from . import web
 import time
 import json
-from flask import request, jsonify, Response
+from flask import request, Response, current_app
 from app.models.content import Content
 from app.web.common import str_2_timestamp, str_2_weeks, timestamp_to_str, week_2_day
 
@@ -41,169 +41,257 @@ def situation():
     return Response(json.dumps(res_dic), mimetype='application/json')
 
 
-def interval_data(time_interval, printer_type, issue_type):
-    start_year, start_week = str_2_weeks(time_interval[0])
-    end_year, end_week = str_2_weeks(time_interval[1])
-    start_compare = start_year * 100 + start_week
-    end_compare = end_year * 100 + end_week
-    content = Content.query.filter(Content.issue_type_id.in_(issue_type),
-                                   (Content.produce_year * 100 + Content.produce_week) > start_compare,
-                                   (Content.produce_year * 100 + Content.produce_week) < end_compare).all()
-
+def _interval_data(content, printer_type):
     # 确定筛选的打印机类型
     printer_dict = dict()
     for printer in printer_type:
         printer_dict.update({printer: {}})
 
-    for data in content:
-        # 放到同类型下
-        cur_type = data.printer_type
-        as_cycle = data.as_cycle
-        if cur_type in printer_dict.keys():
-            if as_cycle and as_cycle > 0:
-                # cur_date = str(data.produce_year * 100 + data.as_cycle)
-                if as_cycle in printer_dict[cur_type].keys():
-                    printer_dict[cur_type][as_cycle] += 1
-                else:
-                    printer_dict[cur_type][as_cycle] = 1
+    try:
+        for data in content:
+            # 放到同类型下
+            cur_type = data.printer_type
+            as_cycle = data.as_cycle
+            if cur_type in printer_dict.keys():
+                if as_cycle and as_cycle > 0:
+                    # cur_date = str(data.produce_year * 100 + data.as_cycle)
+                    if as_cycle in printer_dict[cur_type].keys():
+                        printer_dict[cur_type][as_cycle] += 1
+                    else:
+                        printer_dict[cur_type][as_cycle] = 1
 
-        if cur_type in ["N2S", "N2P(S)", "N2P(D)", "N2(S)", "N2(D)"] and "N2" in printer_dict.keys():
-            if as_cycle and as_cycle > 0:
-                if as_cycle in printer_dict["N2"].keys():
-                    printer_dict["N2"][as_cycle] += 1
-                else:
-                    printer_dict["N2"][as_cycle] = 1
+            if cur_type in ["N2S", "N2P(S)", "N2P(D)", "N2(S)", "N2(D)"] and "N2" in printer_dict.keys():
+                if as_cycle and as_cycle > 0:
+                    if as_cycle in printer_dict["N2"].keys():
+                        printer_dict["N2"][as_cycle] += 1
+                    else:
+                        printer_dict["N2"][as_cycle] = 1
 
-        if cur_type in ["N1(D)", "N1(S)"] and "N1" in printer_dict.keys():
-            if as_cycle and as_cycle > 0:
-                if as_cycle in printer_dict["N1"].keys():
-                    printer_dict["N1"][as_cycle] += 1
-                else:
-                    printer_dict["N1"][as_cycle] = 1
+            if cur_type in ["N1(D)", "N1(S)"] and "N1" in printer_dict.keys():
+                if as_cycle and as_cycle > 0:
+                    if as_cycle in printer_dict["N1"].keys():
+                        printer_dict["N1"][as_cycle] += 1
+                    else:
+                        printer_dict["N1"][as_cycle] = 1
 
-        if cur_type is None and "Unknown" in printer_dict.keys():
-            if as_cycle:
-                if as_cycle in printer_dict["Unknown"].keys():
-                    printer_dict["Unknown"][as_cycle] += 1
-                else:
-                    printer_dict["Unknown"][as_cycle] = 1
+            if cur_type is None and "Unknown" in printer_dict.keys():
+                if as_cycle:
+                    if as_cycle in printer_dict["Unknown"].keys():
+                        printer_dict["Unknown"][as_cycle] += 1
+                    else:
+                        printer_dict["Unknown"][as_cycle] = 1
+        return printer_dict
+    except Exception as e:
+        current_app.logger.error("_interval data handle error")
+        raise e
 
-    # 获取所有可能的键值
+
+def interval_data(time_interval, printer_type, issue_type):
+    try:
+        start_year, start_week = str_2_weeks(time_interval[0])
+        end_year, end_week = str_2_weeks(time_interval[1])
+        start_compare = start_year * 100 + start_week
+        end_compare = end_year * 100 + end_week
+        content = Content.query.filter(Content.issue_type_id.in_(issue_type),
+                                       (Content.produce_year * 100 + Content.produce_week) > start_compare,
+                                       (Content.produce_year * 100 + Content.produce_week) < end_compare).all()
+    except Exception as e:
+        current_app.logger.error("select interval data from database error, args: time_interval:{}, "
+                                 "printer_type:{}, issue_type:{}".format(
+                                  time_interval, printer_type, issue_type))
+        raise e
+
+    if not content:
+        return []
+    # 数据结构化存储
+    printer_dict = _interval_data(content, printer_type)
+    # 数据格式化输出
+    data_list = get_res_data(printer_dict)
+    return data_list
+
+
+def get_res_data(printer_dict):
+
+    # 获取所有可能的键值 "Pro2下所有键以及其他"
     effective_key = set()
     for key in printer_dict.keys():
-        effective_key = effective_key | set(printer_dict[key].keys())
-    # print(effective_key)
+        if printer_dict[key].keys():
+            effective_key = effective_key | set(printer_dict[key].keys())
 
-    # 键值赋值
-    new_printer_dict = printer_dict
-    empty_printer_type = list()
-    for cur_printer_type in printer_dict:
-        cur_printer_data = printer_dict[cur_printer_type]
-        if cur_printer_data:
-            for date, value in cur_printer_data.items():
-                new_printer_dict[cur_printer_type][date] = value
-            # 不在的加进来
-            for date in effective_key:
-                if date not in new_printer_dict[cur_printer_type].keys():
-                    new_printer_dict[cur_printer_type][date] = 0
-        else:
-            empty_printer_type.append(cur_printer_type)
-    for empty_type in empty_printer_type:
-        for date in effective_key:
-            new_printer_dict[empty_type][date] = 0
+    if not effective_key:
+        return []
+    # 键值补全赋值
+    new_printer_dict = completion_key(printer_dict, effective_key)
 
     # 格式化数据
-    data_list = []
-    for cur_printer_type in new_printer_dict:
-        if new_printer_dict[cur_printer_type]:
-            for date, value in new_printer_dict[cur_printer_type].items():
-                cur_dict = {"type": cur_printer_type, "date": date, "value": value}
-                data_list.append(cur_dict)
+    data_list = format_data(new_printer_dict)
     return data_list
+
+
+def _produce_data(content, printer_type):
+
+    printer_dict = dict()
+    for printer in printer_type:
+        printer_dict.update({printer: {}})
+    try:
+        for data in content:
+            # 放到同类型下
+            cur_type = data.printer_type
+            serial_no = data.serial_no
+            if cur_type in printer_dict.keys():
+                if serial_no:
+                    cur_date = week_2_day(serial_no)
+                    if cur_date in printer_dict[cur_type].keys():
+                        printer_dict[cur_type][cur_date] += 1
+                    else:
+                        printer_dict[cur_type][cur_date] = 1
+
+            if cur_type in ["N2S", "N2P(S)", "N2P(D)", "N2(S)", "N2(D)"] and "N2" in printer_dict.keys():
+                if serial_no:
+                    cur_date = week_2_day(serial_no)
+                    if cur_date in printer_dict["N2"].keys():
+                        printer_dict["N2"][cur_date] += 1
+                    else:
+                        printer_dict["N2"][cur_date] = 1
+
+            if cur_type in ["N1(D)", "N1(S)"] and "N1" in printer_dict.keys():
+                if serial_no:
+                    cur_date = week_2_day(serial_no)
+                    if cur_date in printer_dict["N1"].keys():
+                        printer_dict["N1"][cur_date] += 1
+                    else:
+                        printer_dict["N1"][cur_date] = 1
+
+            if cur_type is None and "Unknown" in printer_dict.keys():
+                if serial_no:
+                    cur_date = week_2_day(serial_no)
+                    if cur_date in printer_dict["Unknown"].keys():
+                        printer_dict["Unknown"][cur_date] += 1
+                    else:
+                        printer_dict["Unknown"][cur_date] = 1
+        return printer_dict
+    except Exception as e:
+        current_app.logger.error("_produce data handle error")
+        raise e
 
 
 def produce_data(produce_time, printer_type, issue_type):
-    start_year, start_week = str_2_weeks(produce_time[0])
-    end_year, end_week = str_2_weeks(produce_time[1])
-    start_compare = start_year * 100 + start_week
-    end_compare = end_year * 100 + end_week
-    content = Content.query.filter(Content.issue_type_id.in_(issue_type),
-                                   (Content.produce_year * 100 + Content.produce_week) > start_compare,
-                                   (Content.produce_year * 100 + Content.produce_week) < end_compare).all()
+    try:
+        start_year, start_week = str_2_weeks(produce_time[0])
+        end_year, end_week = str_2_weeks(produce_time[1])
+        start_compare = start_year * 100 + start_week
+        end_compare = end_year * 100 + end_week
+        content = Content.query.filter(Content.issue_type_id.in_(issue_type),
+                                       (Content.produce_year * 100 + Content.produce_week) > start_compare,
+                                       (Content.produce_year * 100 + Content.produce_week) < end_compare).all()
+    except Exception as e:
+        current_app.logger.error("select produce data from database error, args: produce_time:{}, "
+                                 "printer_type:{}, issue_type:{}".format(
+                                  produce_time, printer_type, issue_type))
+        raise e
 
+    if not content:
+        return []
+
+    # 数据结构化存储
+    printer_dict = _produce_data(content, printer_type)
+    # 格式化输出
+    data_list = get_res_data(printer_dict)
+    return data_list
+
+
+def _report_data(content, printer_type):
+    # 查询数据结果整理
     # 确定筛选的打印机类型
+    # printer_dict = {
+    #     "Pro2": {},
+    #     "N2": {}
+    #     }
     printer_dict = dict()
     for printer in printer_type:
         printer_dict.update({printer: {}})
 
-    for data in content:
-        # 放到同类型下
-        cur_type = data.printer_type
-        serial_no = data.serial_no
-        if cur_type in printer_dict.keys():
-            if serial_no:
-                cur_date = week_2_day(serial_no)
-                if cur_date in printer_dict[cur_type].keys():
-                    printer_dict[cur_type][cur_date] += 1
-                else:
-                    printer_dict[cur_type][cur_date] = 1
+    try:
+        for data in content:
+            # 放到同类型下
+            cur_type = data.printer_type
+            if cur_type in printer_dict.keys():
+                if data.as_date:
+                    cur_date = stamp_2_week(data.as_date)
+                    if cur_date in printer_dict[cur_type].keys():
+                        printer_dict[cur_type][cur_date] += 1
+                    else:
+                        printer_dict[cur_type][cur_date] = 1
+            if cur_type in ["N2S", "N2P(S)", "N2P(D)", "N2(S)", "N2(D)"] and "N2" in printer_dict.keys():
+                if data.as_date:
+                    cur_date = stamp_2_week(data.as_date)
+                    if cur_date in printer_dict["N2"].keys():
+                        printer_dict["N2"][cur_date] += 1
+                    else:
+                        printer_dict["N2"][cur_date] = 1
 
-        if cur_type in ["N2S", "N2P(S)", "N2P(D)", "N2(S)", "N2(D)"] and "N2" in printer_dict.keys():
-            if serial_no:
-                cur_date = week_2_day(serial_no)
-                if cur_date in printer_dict["N2"].keys():
-                    printer_dict["N2"][cur_date] += 1
-                else:
-                    printer_dict["N2"][cur_date] = 1
+            if cur_type in ["N1(D)", "N1(S)"] and "N1" in printer_dict.keys():
+                if data.as_date:
+                    cur_date = stamp_2_week(data.as_date)
+                    if cur_date in printer_dict["N1"].keys():
+                        printer_dict["N1"][cur_date] += 1
+                    else:
+                        printer_dict["N1"][cur_date] = 1
 
-        if cur_type in ["N1(D)", "N1(S)"] and "N1" in printer_dict.keys():
-            if serial_no:
-                cur_date = week_2_day(serial_no)
-                if cur_date in printer_dict["N1"].keys():
-                    printer_dict["N1"][cur_date] += 1
-                else:
-                    printer_dict["N1"][cur_date] = 1
+            if cur_type is None and "Unknown" in printer_dict.keys():
+                if data.as_date:
+                    cur_date = stamp_2_week(data.as_date)
+                    if cur_date in printer_dict["Unknown"].keys():
+                        printer_dict["Unknown"][cur_date] += 1
+                    else:
+                        printer_dict["Unknown"][cur_date] = 1
+        return printer_dict
+    except Exception as e:
+        current_app.logger.error("_report data handle error")
+        raise e
 
-        if cur_type is None and "Unknown" in printer_dict.keys():
-            if serial_no:
-                cur_date = week_2_day(serial_no)
-                if cur_date in printer_dict["Unknown"].keys():
-                    printer_dict["Unknown"][cur_date] += 1
-                else:
-                    printer_dict["Unknown"][cur_date] = 1
 
-    # 获取所有可能的键值
-    effective_key = set()
-    for key in printer_dict.keys():
-        effective_key = effective_key | set(printer_dict[key].keys())
-    # print(effective_key)
+def report_data(report_time, printer_type, issue_type):
+    try:
+        start_time = str_2_timestamp(report_time[0])
+        end_time = str_2_timestamp(report_time[1])
 
-    # 键值赋值
-    new_printer_dict = printer_dict
-    empty_printer_type = list()
-    for cur_printer_type in printer_dict:
-        cur_printer_data = printer_dict[cur_printer_type]
-        if cur_printer_data:
-            for date, value in cur_printer_data.items():
-                new_printer_dict[cur_printer_type][date] = value
-            # 不在的加进来
-            for date in effective_key:
-                if date not in new_printer_dict[cur_printer_type].keys():
-                    new_printer_dict[cur_printer_type][date] = 0
-        else:
-            empty_printer_type.append(cur_printer_type)
-    for empty_type in empty_printer_type:
-        for date in effective_key:
-            new_printer_dict[empty_type][date] = 0
+        content = Content.query.filter(Content.issue_type_id.in_(issue_type),
+                                       Content.as_date > start_time,
+                                       Content.as_date < end_time).order_by(
+                                       Content.as_date.asc()).all()
+    except Exception as e:
+        current_app.logger.error("select report data from database error, args: report_time:{}, "
+                                 "printer_type:{}, issue_type:{}".format(
+                                  report_time, printer_type, issue_type))
+        raise e
 
-    # 格式化数据
-    data_list = []
-    for cur_printer_type in new_printer_dict:
-        if new_printer_dict[cur_printer_type]:
-            for date, value in new_printer_dict[cur_printer_type].items():
-                cur_dict = {"type": cur_printer_type, "date": date, "value": value}
-                data_list.append(cur_dict)
+    if not content:
+        return []
+    # 数据结构化存储
+    printer_dict = _report_data(content, printer_type)
+    # 格式化输出
+    data_list = get_res_data(printer_dict)
     return data_list
+
+
+# printer_dict = {
+#     "Pro2": {
+#         "20180101": 3,
+#         "20180102": 5,
+#         "20180103": 6
+#     },
+#     "N2": {
+#         "20180101": 3,
+#         "20180102": 5,
+#         "20180103": 6
+#     }
+#     }
+
+# {
+#     "type": "pro2", "date": "201802", "value": 3,
+#     "type": "pro2", "date": "201803", "value": 1,
+# }
 
 
 def stamp_2_week(time_stamp):
@@ -216,88 +304,13 @@ def stamp_2_week(time_stamp):
     return mon_day
 
 
-def report_data(report_time, printer_type, issue_type):
-    start_time = str_2_timestamp(report_time[0])
-    end_time = str_2_timestamp(report_time[1])
-    content = Content.query.filter(Content.issue_type_id.in_(issue_type),
-                                   Content.as_date > start_time,
-                                   Content.as_date < end_time).order_by(
-                                   Content.as_date.asc()).all()
-
-    # 确定筛选的打印机类型
-    printer_dict = dict()
-    # printer_dict = collections.OrderedDict()
-    # for printer in printer_type:
-    #     internal_dict = collections.OrderedDict()
-    #     printer_dict.update({printer: internal_dict})
-    for printer in printer_type:
-        printer_dict.update({printer: {}})
-
-    # printer_dict_tmp = {
-    #     "Pro2": {
-    #         "20180101": 3,
-    #         "20180102": 5,
-    #         "20180103": 6
-    #     },
-    #     "N2": {
-    #         "20180101": 3,
-    #         "20180102": 5,
-    #         "20180103": 6
-    #     }
-    #     }
-
-    # {
-    #     "type": "pro2", "date": "201802", "value": 3,
-    #     "type": "pro2", "date": "201803", "value": 1,
-    # }
-
-    for data in content:
-        # 放到同类型下
-        cur_type = data.printer_type
-        if cur_type in printer_dict.keys():
-            if data.as_date:
-                cur_date = stamp_2_week(data.as_date)
-                if cur_date in printer_dict[cur_type].keys():
-                    printer_dict[cur_type][cur_date] += 1
-                else:
-                    printer_dict[cur_type][cur_date] = 1
-        if cur_type in ["N2S", "N2P(S)", "N2P(D)", "N2(S)", "N2(D)"] and "N2" in printer_dict.keys():
-            if data.as_date:
-                cur_date = stamp_2_week(data.as_date)
-                if cur_date in printer_dict["N2"].keys():
-                    printer_dict["N2"][cur_date] += 1
-                else:
-                    printer_dict["N2"][cur_date] = 1
-
-        if cur_type in ["N1(D)", "N1(S)"] and "N1" in printer_dict.keys():
-            if data.as_date:
-                cur_date = stamp_2_week(data.as_date)
-                if cur_date in printer_dict["N1"].keys():
-                    printer_dict["N1"][cur_date] += 1
-                else:
-                    printer_dict["N1"][cur_date] = 1
-
-        if cur_type is None and "Unknown" in printer_dict.keys():
-            if data.as_date:
-                cur_date = stamp_2_week(data.as_date)
-                if cur_date in printer_dict["Unknown"].keys():
-                    printer_dict["Unknown"][cur_date] += 1
-                else:
-                    printer_dict["Unknown"][cur_date] = 1
-
-    # 获取所有可能的键值
-    effective_key = set()
-    for key in printer_dict.keys():
-        effective_key = effective_key | set(printer_dict[key].keys())
-
-    # 键值赋值
+def completion_key(printer_dict, effective_key):
+    # 键值补全
     new_printer_dict = printer_dict
     empty_printer_type = list()
     for cur_printer_type in printer_dict:
         cur_printer_data = printer_dict[cur_printer_type]
         if cur_printer_data:
-            for date, value in cur_printer_data.items():
-                new_printer_dict[cur_printer_type][date] = value
             # 不在的加进来
             for date in effective_key:
                 if date not in new_printer_dict[cur_printer_type].keys():
@@ -308,29 +321,19 @@ def report_data(report_time, printer_type, issue_type):
         for date in effective_key:
             new_printer_dict[empty_type][date] = 0
 
+    return new_printer_dict
+
+
+def format_data(printer_dict):
+    # {
+    #     "type": "pro2", "date": "201802", "value": 3,
+    #     "type": "pro2", "date": "201803", "value": 1,
+    # }
     # 格式化数据
     data_list = []
-    for cur_printer_type in new_printer_dict:
-        if new_printer_dict[cur_printer_type]:
-            for date, value in new_printer_dict[cur_printer_type].items():
+    for cur_printer_type in printer_dict:
+        if printer_dict[cur_printer_type]:
+            for date, value in printer_dict[cur_printer_type].items():
                 cur_dict = {"type": cur_printer_type, "date": date, "value": value}
                 data_list.append(cur_dict)
     return data_list
-
-
-#     # 详情字段
-#     detail_data = {
-#                 "as_date": "",
-#                 "serial_no": "",
-#                 "issue": "",
-#                 "issue_type": "",
-#                 "printer_type": "",
-#                 "time_internal": "",
-#                 "produce_year": ""
-#             }
-
-# @web.route('/situation')
-# def situation():
-#     # res = Issue.query.all()
-#     # user = Issue.query.filter_by(id=2).first()
-#     content = Content.query.filter_by(id=2).first()
