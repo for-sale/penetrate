@@ -1,18 +1,14 @@
-import json
-import time
 from . import web
-from app.models.issue import Issue
 from app.models.content import Content
-from app.models.setting import Setting
 from app.models.base import db
-from flask import current_app, Response, request, jsonify
-from .common import PRINTER_TYPE, last_few_days
-from .utils import type_sorted
-from pandas import DataFrame
+from flask import request, current_app
+from .common import last_few_days
+from .utils import jsonify
 
 
 @web.route("/solve_status", methods=["POST"])
 def solve_status():
+    current_app.logger.info("/api-v1/solve_status")
     n = request.form.get("length")
     if not n:
         n = 0
@@ -32,7 +28,7 @@ def solve_status():
                 dic_status_data[93]["counts"] += s_data[1]
                 total += s_data[1]
             else:
-                dic_status_data[s_data[0]] = {"status_id": s_data[0], "counts": 0, "percent": 0}
+                dic_status_data.update({s_data[0]: {"status_id": s_data[0], "counts": 0, "percent": 0}})
                 dic_status_data[s_data[0]]["counts"] += s_data[1]
                 total += s_data[1]
         for k, v in dic_status_data.items():
@@ -41,5 +37,4 @@ def solve_status():
         res_dic["data"] = list(dic_status_data.values())
     else:
         res_dic = {}
-    return Response(json.dumps(res_dic), mimetype='application/json')
-
+    return jsonify(res_dic), 200, {'ContentType': 'application/json'}

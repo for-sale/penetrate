@@ -1,10 +1,7 @@
-import json
 from . import web
-from app.models.issue import Issue
 from app.models.content import Content
-from app.models.setting import Setting
 from app.models.base import db
-from flask import current_app, Response, request
+from flask import current_app, request
 from .common import PRINTER_TYPE
 from .utils import type_sorted, jsonify
 from pandas import DataFrame
@@ -20,7 +17,8 @@ def top_type():
         total = 0
         types_counts_dic = {}
         for p_type in PRINTER_TYPE:
-            types_counts_dic[p_type] = {"printer_type": p_type, "counts": 0, "percent": 0}
+            types_counts_dic.update({p_type: {"printer_type": p_type, "counts": 0, "percent": 0}})
+
         top_type_dic[type_id] = types_counts_dic
         issue_type = db.session.query(Content.printer_type, db.func.count(Content.id)).filter(
             Content.issue_type_id == type_id).group_by(Content.printer_type).all()
@@ -41,11 +39,10 @@ def top_type():
     res_dic = {"data": []}
     index = 0
     for k, v in top_type_dic.items():
-        t_dic = {"id": k, "index": index, "counts":list(v.values())}
+        t_dic = {"id": k, "index": index, "counts": list(v.values())}
         res_dic["data"].append(t_dic)
         index += 1
     return jsonify(res_dic), 200, {'ContentType': 'application/json'}
-    # return Response(json.dumps(res_dic), mimetype='application/json')
 
 
 @web.route("/top_type_detail", methods=["POST"])
@@ -56,7 +53,8 @@ def top_type_data():
 
     for type_id in sorted_type_id:
         total = 0
-        top_type_dic[type_id] = {"Unknown": 0}
+        top_type_dic.update({type_id: {"Unknown": 0}})
+
         issue_type = db.session.query(Content.printer_type, db.func.count(Content.id)).filter(
             Content.issue_type_id == type_id).group_by(Content.printer_type).all()
         for res in issue_type:
@@ -76,4 +74,12 @@ def top_type_data():
         df[i_counts].fillna(0, inplace=True)
         l_dic = {"id": i_counts, "index": i_index, "counts": df[i_counts].tolist()}
         res_dic["data"].append(l_dic)
+    return jsonify(res_dic), 200, {'ContentType': 'application/json'}
+
+
+@web.route("/order_type_id", methods=["POST"])
+def order_type_id():
+    sorted_type_id = type_sorted()
+    res_dic = {}
+    res_dic["data"] = sorted_type_id
     return jsonify(res_dic), 200, {'ContentType': 'application/json'}
