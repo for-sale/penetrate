@@ -44,7 +44,7 @@ def get_comparision_data(printer_type, issue_type, compare_week):
     content = None
     try:
         if printer_type in ["Pro2", "Pro2 Plus", "Unknown"]:
-            if printer_type == "Unknown":
+            if printer_type == "Unknown" or printer_type == "":
                 sub_printer_type = None
             else:
                 sub_printer_type = printer_type
