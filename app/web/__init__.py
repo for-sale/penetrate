@@ -16,4 +16,3 @@ from . import top_type
 from . import solve_status
 from . import utils
 from . import solve_time
-from . import time_comparison

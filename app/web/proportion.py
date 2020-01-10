@@ -2,7 +2,7 @@ import json
 from . import web
 from app.models.content import Content
 from app.models.base import db
-from flask import current_app, Response, request
+from flask import current_app, Response
 from .common import PRINTER_TYPE
 
 
@@ -18,7 +18,7 @@ def proportion():
     total = 0.0
     for pt in printer_types:
         total += pt[1]
-        if pt[0] == None or pt[0] == "":
+        if pt[0] is None or pt[0] == "":
             types_counts_dic["Unknown"]["counts"] += pt[1]
         elif "N1" in pt[0]:
             types_counts_dic["N1"]["counts"] += pt[1]
@@ -32,6 +32,6 @@ def proportion():
     for k, v in types_counts_dic.items():
         v["percent"] = float("%.2f" % (v["counts"] / total))
 
-    res_dic = {}
+    res_dic = dict()
     res_dic["data"] = list(types_counts_dic.values())
     return Response(json.dumps(res_dic), mimetype='application/json')

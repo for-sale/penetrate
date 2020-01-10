@@ -13,18 +13,16 @@ def solve_status():
     if not n:
         n = 0
     if int(n):
-        print(".......", n)
         start_time, end_time = last_few_days(int(n))
         status_data = db.session.query(Content.status_id, db.func.count(Content.id)).filter(
             Content.as_date.between(start_time, end_time)).group_by(Content.status_id).all()
     else:
-        print("++++++", n)
         status_data = db.session.query(Content.status_id, db.func.count(Content.id)).group_by(Content.status_id).all()
     dic_status_data = {93: {"status_id": 93, "counts": 0, "percent": 0}}
     if status_data:
         total = 0
         for s_data in status_data:
-            if s_data[0] == None:
+            if s_data[0] is None:
                 dic_status_data[93]["counts"] += s_data[1]
                 total += s_data[1]
             else:
@@ -33,7 +31,7 @@ def solve_status():
                 total += s_data[1]
         for k, v in dic_status_data.items():
             v["percent"] = float("%.2f" % (v["counts"] / total))
-        res_dic = {}
+        res_dic = dict()
         res_dic["data"] = list(dic_status_data.values())
     else:
         res_dic = {}

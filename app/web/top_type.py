@@ -1,7 +1,7 @@
 from . import web
 from app.models.content import Content
 from app.models.base import db
-from flask import current_app, request
+from flask import current_app
 from .common import PRINTER_TYPE
 from .utils import type_sorted, jsonify
 from pandas import DataFrame
@@ -24,7 +24,7 @@ def top_type():
             Content.issue_type_id == type_id).group_by(Content.printer_type).all()
         for res in issue_type:
             total += res[1]
-            if res[0] == None or res[0] == "":
+            if res[0] is None or res[0] == "":
                 top_type_dic[type_id]["Unknown"]["counts"] += res[1]
             elif "N1" in res[0]:
                 top_type_dic[type_id]["N1"]["counts"] += res[1]
@@ -59,7 +59,7 @@ def top_type_data():
             Content.issue_type_id == type_id).group_by(Content.printer_type).all()
         for res in issue_type:
             total += res[1]
-            if res[0] == None or res[0] == "":
+            if res[0] is None or res[0] == "":
                 top_type_dic[type_id]["Unknown"] += res[1]
             else:
                 top_type_dic[type_id][res[0]] = res[1]
@@ -68,8 +68,7 @@ def top_type_data():
     df.loc['category_counts'] = df.apply(lambda x: x.sum())
     df.sort_values(by='category_counts', axis=1, inplace=True, ascending=False)
     c_l = df.columns.values.tolist()
-    res_dic = {"data": []}
-    res_dic["printerTypes"] = df.index.values.tolist()
+    res_dic = {"data": [], "printerTypes": df.index.values.tolist()}
     for i_index, i_counts in enumerate(c_l):
         df[i_counts].fillna(0, inplace=True)
         l_dic = {"id": i_counts, "index": i_index, "counts": df[i_counts].tolist()}
@@ -80,6 +79,6 @@ def top_type_data():
 @web.route("/order_type_id", methods=["POST"])
 def order_type_id():
     sorted_type_id = type_sorted()
-    res_dic = {}
+    res_dic = dict()
     res_dic["data"] = sorted_type_id
     return jsonify(res_dic), 200, {'ContentType': 'application/json'}

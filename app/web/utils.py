@@ -12,6 +12,7 @@ def type_sorted():
         sorted_type_id.append(p_type[0])
     return sorted_type_id
 
+
 # @web.errorhandler(400)
 # def error(msg):
 #     current_app.logger.error(msg)
@@ -38,4 +39,3 @@ def jsonify(*args, **kwargs):
         json.dumps(data, indent=indent, separators=separators, sort_keys=False) + '\n',
         mimetype=current_app.config['JSONIFY_MIMETYPE']
     )
-

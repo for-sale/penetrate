@@ -104,32 +104,16 @@ def last_few_days(n):
     return start_time, end_time
 
 
-# def get_week_number(dt):
-#     """get both year and week number of a specified date object
-#
-#     :param dt: date or datetime object which you want to corresponding get week number
-#     :return: a tuple including both year and week number. (year, week_num)
-#     """
-#     year = dt.year
-#     month = dt.month
-#     week_num = int(dt.strftime("%V"))
-#     if month == 12 and week_num == 1:
-#         return year + 1, week_num
-#     return year, week_num
-
-
-def get_year_week(start_time, end_time):
+def get_year_week(t_time):
     """
     获取 1905 格式的日期
-    :param start_time: "2019-05"
-    :param end_time: "2019-45"
-    :return: yearweek(1905) -> start_time end_time
+    :param t_time: "2019-05"
+    :return: year, week
     """
-    s_tup = start_time.split("-")
-    end_tup = end_time.split("-")
-    s_time = s_tup[0][2:4] + s_tup[1]
-    e_time = end_tup[0][2:4] + end_tup[1]
-    return s_time, e_time
+    tup_time = t_time.split("-")
+    t_year = tup_time[0]
+    t_week = tup_time[1]
+    return int(t_year), int(t_week)
 
 
 def id_2_type(t_id):
@@ -140,3 +124,16 @@ def id_2_type(t_id):
     """
     i_type = ISSUE_TYPE.get(t_id)
     return i_type
+
+
+type_dic = {
+    "N1": "",
+    "N2": "",
+    "Pro2": "",
+    "Pro2 Plus": ""
+}
+
+
+def type_2_printer_type(issue_type):
+    types = type_dic.get(issue_type)
+    return types
