@@ -139,7 +139,7 @@ def _produce_data(content, printer_type):
             cur_type = data.printer_type
             serial_no = data.serial_no
             if cur_type in printer_dict.keys():
-                if serial_no:
+                if serial_no and len(serial_no) == 11:
                     cur_date = week_2_day(serial_no)
                     if cur_date in printer_dict[cur_type].keys():
                         printer_dict[cur_type][cur_date] += 1
@@ -147,7 +147,7 @@ def _produce_data(content, printer_type):
                         printer_dict[cur_type][cur_date] = 1
 
             if cur_type in ["N2S", "N2P(S)", "N2P(D)", "N2(S)", "N2(D)"] and "N2" in printer_dict.keys():
-                if serial_no:
+                if serial_no and len(serial_no) == 11:
                     cur_date = week_2_day(serial_no)
                     if cur_date in printer_dict["N2"].keys():
                         printer_dict["N2"][cur_date] += 1
@@ -155,7 +155,7 @@ def _produce_data(content, printer_type):
                         printer_dict["N2"][cur_date] = 1
 
             if cur_type in ["N1(D)", "N1(S)"] and "N1" in printer_dict.keys():
-                if serial_no:
+                if serial_no and len(serial_no) == 11:
                     cur_date = week_2_day(serial_no)
                     if cur_date in printer_dict["N1"].keys():
                         printer_dict["N1"][cur_date] += 1
@@ -163,7 +163,7 @@ def _produce_data(content, printer_type):
                         printer_dict["N1"][cur_date] = 1
 
             if cur_type is None and "Unknown" in printer_dict.keys():
-                if serial_no:
+                if serial_no and len(serial_no) == 11:
                     cur_date = week_2_day(serial_no)
                     if cur_date in printer_dict["Unknown"].keys():
                         printer_dict["Unknown"][cur_date] += 1
