@@ -84,8 +84,8 @@ def get_res_data(content, printer_type, start, length):
                 "issue": data.issue_content if data.issue_content else "",
                 "issue_type": data.issue_type_id if data.issue_type_id else "",
                 "printer_type": data.printer_type if data.printer_type else "Unknown",
-                "time_internal": data.as_cycle if data.as_cycle else "",
-                "produce_date": week_2_day(data.serial_no) if data.produce_year else ""
+                "time_internal": data.as_cycle if data.as_cycle and data.as_cycle > 0 else "",
+                "produce_date": week_2_day(data.serial_no) if data.serial_no and len(data.serial_no) == 11 else ""
             }
             res_list.append(sub_dict)
 
@@ -99,8 +99,8 @@ def interval_data(time_interval, printer_type, issue_type, start, length):
         start_compare = start_year * 100 + start_week
         end_compare = end_year * 100 + end_week
         content = Content.query.filter(Content.issue_type_id.in_(issue_type),
-                                       (Content.produce_year * 100 + Content.as_cycle) > start_compare,
-                                       (Content.produce_year * 100 + Content.as_cycle) < end_compare).order_by(
+                                       (Content.produce_year * 100 + Content.produce_week) > start_compare,
+                                       (Content.produce_year * 100 + Content.produce_week) < end_compare).order_by(
                                        Content.as_date.asc()).all()
     except Exception as e:
         current_app.logger.error("select interval data from database error, args: time_interval:{}, printer_type:{}, "
