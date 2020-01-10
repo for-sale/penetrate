@@ -1,5 +1,6 @@
 import time
 import json
+import math
 from . import web
 from app.models.content import Content
 from flask import current_app, request, Response
@@ -23,6 +24,10 @@ def solve_time():
         res_dic = {"status": "failed", "msg": "missing required parameters date_start or date_end"}
         return Response(json.dumps(res_dic), mimetype='application/json')
 
+    if "-" not in date_start or "-" not in date_end:
+        res_dic = {"status": "failed", "msg": "Required parameters date_start or date_end, Data format error"}
+        return Response(json.dumps(res_dic), mimetype='application/json')
+
     if not issue_type_ids:
         try:
             issue_type_ids = type_sorted()[0:10]
@@ -35,12 +40,18 @@ def solve_time():
 
 
 def get_mysql_data(date_start, date_end, issue_type_ids):
-    try:
-        start_year, start_week = get_year_week(date_start)
-        end_year, end_week = get_year_week(date_end)
+    start_year, start_week = get_year_week(date_start)
+    end_year, end_week = get_year_week(date_end)
+    if all([start_year, start_week, end_year, end_week]):
         start_compare = start_year * 100 + start_week
         end_compare = end_year * 100 + end_week
-
+    else:
+        current_app.logger.error(
+            "solve_time, select get_year_week data format error, args: date_start:{}, date_end:{}".format(
+                date_start, date_end))
+        res_dic = {"status": "failed", "msg": "Required parameters date_start or date_end, Data format error"}
+        return res_dic
+    try:
         content_data = Content.query.filter(Content.issue_type_id.in_(issue_type_ids),
                                             Content.produce_year * 100 + Content.produce_week > start_compare,
                                             Content.produce_year * 100 + Content.produce_week < end_compare).all()
@@ -72,8 +83,8 @@ def get_res_dic(issue_type_ids, content_data):
     for k, v in type_cycle_dic.items():
         if v:
             total = len(v)
-            low_node = v[round(total * 0.2)]
-            high_node = v[round(total * 0.8)]
+            low_node = v[math.floor(total * 0.2)]
+            high_node = v[math.floor(total * 0.8)]
             average = round(sum(v) / total)
             low_cycle = v[0]
             high_cycle = v[-1]
