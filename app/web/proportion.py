@@ -8,13 +8,16 @@ from .common import PRINTER_TYPE
 
 @web.route('/proportion', methods=["POST"])
 def proportion():
-    current_app.logger.info("/api-v1/proportion")
     types_counts_dic = {}
     for p_type in PRINTER_TYPE:
-        types_counts_dic[p_type] = {"printer_type": p_type, "counts": 0, "percent": 0}
+        types_counts_dic.update({p_type: {"printer_type": p_type, "counts": 0, "percent": 0}})
+    try:
+        printer_types = db.session.query(Content.printer_type, db.func.count(Content.id)).group_by(
+            Content.printer_type).all()
+    except Exception as e:
+        current_app.logger.error("select proportion data error")
+        raise e
 
-    printer_types = db.session.query(Content.printer_type, db.func.count(Content.id)).group_by(
-        Content.printer_type).all()
     total = 0.0
     for pt in printer_types:
         total += pt[1]

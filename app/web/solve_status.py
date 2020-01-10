@@ -1,23 +1,30 @@
 from . import web
 from app.models.content import Content
 from app.models.base import db
-from flask import request, current_app
+from flask import request, current_app, Response
 from .common import last_few_days
-from .utils import jsonify
+import json
 
 
 @web.route("/solve_status", methods=["POST"])
 def solve_status():
-    current_app.logger.info("/api-v1/solve_status")
-    n = request.form.get("length")
-    if not n:
-        n = 0
-    if int(n):
-        start_time, end_time = last_few_days(int(n))
-        status_data = db.session.query(Content.status_id, db.func.count(Content.id)).filter(
-            Content.as_date.between(start_time, end_time)).group_by(Content.status_id).all()
-    else:
-        status_data = db.session.query(Content.status_id, db.func.count(Content.id)).group_by(Content.status_id).all()
+    try:
+        length = request.json.get("length", 0)
+    except Exception as e:
+        current_app.logger.error("select sorted_type_id data error: {}".format(str(e)))
+        length = 0
+    try:
+        if int(length):
+            start_time, end_time = last_few_days(int(length))
+            status_data = db.session.query(Content.status_id, db.func.count(Content.id)).filter(
+                Content.as_date.between(start_time, end_time)).group_by(Content.status_id).all()
+        else:
+            status_data = db.session.query(Content.status_id, db.func.count(Content.id)).group_by(
+                Content.status_id).all()
+    except Exception as e:
+        current_app.logger.error("select sorted_type_id data error")
+        raise e
+
     dic_status_data = {93: {"status_id": 93, "counts": 0, "percent": 0}}
     if status_data:
         total = 0
@@ -35,4 +42,6 @@ def solve_status():
         res_dic["data"] = list(dic_status_data.values())
     else:
         res_dic = {}
-    return jsonify(res_dic), 200, {'ContentType': 'application/json'}
+        current_app.logger.info("solve_status data is empty")
+
+    return Response(json.dumps(res_dic), mimetype='application/json')
