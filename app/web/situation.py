@@ -74,12 +74,16 @@ def _interval_data(content, printer_type):
                     else:
                         printer_dict["N1"][as_cycle] = 1
 
-            if cur_type is None and "Unknown" in printer_dict.keys():
-                if as_cycle:
+            if (cur_type is None or cur_type == "") and "Unknown" in printer_dict.keys():
+                if as_cycle and as_cycle > 0:
                     if as_cycle in printer_dict["Unknown"].keys():
                         printer_dict["Unknown"][as_cycle] += 1
                     else:
                         printer_dict["Unknown"][as_cycle] = 1
+            # test
+            # if not as_cycle:
+            # print(cur_type, as_cycle)
+            # test
         return printer_dict
     except Exception as e:
         current_app.logger.error("_interval data handle error")
@@ -162,13 +166,20 @@ def _produce_data(content, printer_type):
                     else:
                         printer_dict["N1"][cur_date] = 1
 
-            if cur_type is None and "Unknown" in printer_dict.keys():
+            if (cur_type is None or cur_type == "") and "Unknown" in printer_dict.keys():
                 if serial_no and len(serial_no) == 11:
                     cur_date = week_2_day(serial_no)
                     if cur_date in printer_dict["Unknown"].keys():
                         printer_dict["Unknown"][cur_date] += 1
                     else:
                         printer_dict["Unknown"][cur_date] = 1
+
+            # ### test   序列号不对数据会减少
+            # if len(serial_no) != 11:
+            #     print(serial_no, cur_type)
+            #     print(len(serial_no))
+            #     print("hah" + serial_no + cur_type)
+            # ### test
         return printer_dict
     except Exception as e:
         current_app.logger.error("_produce data handle error")
@@ -238,13 +249,14 @@ def _report_data(content, printer_type):
                     else:
                         printer_dict["N1"][cur_date] = 1
 
-            if cur_type is None and "Unknown" in printer_dict.keys():
+            if (cur_type is None or cur_type == "") and "Unknown" in printer_dict.keys():
                 if data.as_date:
                     cur_date = stamp_2_week(data.as_date)
                     if cur_date in printer_dict["Unknown"].keys():
                         printer_dict["Unknown"][cur_date] += 1
                     else:
                         printer_dict["Unknown"][cur_date] = 1
+
         return printer_dict
     except Exception as e:
         current_app.logger.error("_report data handle error")
