@@ -62,6 +62,7 @@ def get_real_printer_type(printer_type):
     for key in printer_type:
         if key == "Unknown":
             sub_printer_type.append(None)
+            sub_printer_type.append("")
             continue
         if key == "N2":
             sub_printer_type.extend(["N2S", "N2P(S)", "N2P(D)", "N2(S)", "N2(D)"])
@@ -84,7 +85,7 @@ def get_res_data(content, printer_type, start, length):
                 "issue": data.issue_content if data.issue_content else "",
                 "issue_type": data.issue_type_id if data.issue_type_id else "",
                 "printer_type": data.printer_type if data.printer_type else "Unknown",
-                "time_internal": data.as_cycle if data.as_cycle and data.as_cycle > 0 else "",
+                "time_internal": data.as_cycle if data.as_cycle else "",
                 "produce_date": week_2_day(data.serial_no) if data.serial_no and len(data.serial_no) == 11 else ""
             }
             res_list.append(sub_dict)
