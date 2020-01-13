@@ -29,9 +29,13 @@ def comparision_data(printer_type, issue_type, compare_week):
         after_data = get_comparision_data(printer_type, issue_type, after_week)
 
         final_list = list()
+        f_year, f_weeks = str_2_weeks(former_week)
+        af_year, af_weeks = str_2_weeks(after_week)
+        former = "{}{}".format(f_year, f_weeks)
+        after = "{}{}".format(af_year, af_weeks)
         for issue_id in issue_type:
-            final_list.append({"week": "former", "id": int(issue_id), "value": former_data[int(issue_id)]})
-            final_list.append({"week": "after", "id": int(issue_id), "value": after_data[int(issue_id)]})
+            final_list.append({"week": former, "id": int(issue_id), "value": former_data[int(issue_id)]})
+            final_list.append({"week": after, "id": int(issue_id), "value": after_data[int(issue_id)]})
 
         return final_list
     except Exception as e:

@@ -4,9 +4,6 @@ import logging
 from logging.handlers import RotatingFileHandler
 from app.models.base import db
 from flask_cors import *
-import pymysql
-
-pymysql.install_as_MySQLdb()
 
 
 def create_app():
