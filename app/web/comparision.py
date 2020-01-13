@@ -12,8 +12,8 @@ def comparision():
     issue_type = data["issue_type"]  # list   issue id
     compare_week = data["compare_week"]  # [20180203  20180204]
     if not printer_type or not issue_type or not compare_week:
-        data = {"status": "failed", "msg": "missing required parameters printer type or issue type"}
-        return Response(json.dumps(data), mimetype='application/json')
+        current_app.logger.error("printer_type or issue_type error or compare_week error, return []")
+        return Response(json.dumps([]), mimetype='application/json')
 
     data = comparision_data(printer_type, issue_type, compare_week)
     return Response(json.dumps(data), mimetype='application/json')
@@ -29,9 +29,18 @@ def comparision_data(printer_type, issue_type, compare_week):
         after_data = get_comparision_data(printer_type, issue_type, after_week)
 
         final_list = list()
+        f_year, f_weeks = str_2_weeks(former_week)
+        af_year, af_weeks = str_2_weeks(after_week)
+
+        if f_weeks < 10:
+            f_weeks = "0" + str(f_weeks)
+        if af_weeks < 10:
+            af_weeks = "0" + str(af_weeks)
+        former = "{}-{}".format(f_year, f_weeks)
+        after = "{}-{}".format(af_year, af_weeks)
         for issue_id in issue_type:
-            final_list.append({"week": "former", "id": int(issue_id), "value": former_data[int(issue_id)]})
-            final_list.append({"week": "after", "id": int(issue_id), "value": after_data[int(issue_id)]})
+            final_list.append({"week": former, "id": int(issue_id), "value": former_data[int(issue_id)]})
+            final_list.append({"week": after, "id": int(issue_id), "value": after_data[int(issue_id)]})
 
         return final_list
     except Exception as e:

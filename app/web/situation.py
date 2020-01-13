@@ -21,8 +21,8 @@ def situation():
     time_interval = data["time_interval"] if "time_interval" in data else []
 
     if not printer_type or not issue_type:
-        data = {"status": "failed", "msg": "missing required parameters printer type or issue type"}
-        return Response(json.dumps(data), mimetype='application/json')
+        current_app.logger.error("empty issue type or printer type, return []")
+        return Response(json.dumps([]), mimetype='application/json')
 
     if report_time:
         data = report_data(report_time, printer_type, issue_type)
@@ -310,7 +310,7 @@ def stamp_2_week(time_stamp):
     # 实践戳 -> 20180803
     str_time = timestamp_to_str(time_stamp)
     year, week = str_2_weeks(str_time)
-    year_week = str(year) + "-" + str(week) + "-" + str(1)
+    year_week = str(year) + "-" + str(week - 1) + "-" + str(1)
     struct_time = time.strptime(year_week, '%Y-%W-%w')
     mon_day = time.strftime("%Y%m%d", struct_time)
     return mon_day
