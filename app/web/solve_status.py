@@ -11,7 +11,7 @@ def solve_status():
     try:
         length = request.json.get("length", 0)
     except Exception as e:
-        current_app.logger.error("select sorted_type_id data error: {}".format(str(e)))
+        current_app.logger.error("select solve_status data error: {}".format(str(e)))
         length = 0
     try:
         if int(length):
@@ -22,7 +22,7 @@ def solve_status():
             status_data = db.session.query(Content.status_id, db.func.count(Content.id)).group_by(
                 Content.status_id).all()
     except Exception as e:
-        current_app.logger.error("select sorted_type_id data error")
+        current_app.logger.error("select solve_status data error: {}".format(str(e)))
         raise e
 
     dic_status_data = {93: {"status_id": 93, "counts": 0, "percent": 0}}
