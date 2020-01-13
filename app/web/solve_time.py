@@ -5,7 +5,6 @@ from . import web
 from app.models.content import Content
 from flask import current_app, request, Response
 from .common import get_year_week
-from .utils import type_sorted
 
 
 @web.route("/solve_time", methods=["POST"])
@@ -19,6 +18,10 @@ def solve_time():
         current_app.logger.error("select solve_time data error: {}".format(str(e)))
         raise e
 
+    if not issue_type_ids:
+        res_dic = dict()
+        return Response(json.dumps(res_dic), mimetype='application/json')
+
     bool_res = all([date_start, date_end])
     if not bool_res:
         res_dic = {"status": "failed", "msg": "missing required parameters date_start or date_end"}
@@ -27,13 +30,6 @@ def solve_time():
     if "-" not in date_start or "-" not in date_end:
         res_dic = {"status": "failed", "msg": "Required parameters date_start or date_end, Data format error"}
         return Response(json.dumps(res_dic), mimetype='application/json')
-
-    if not issue_type_ids:
-        try:
-            issue_type_ids = type_sorted()[0:10]
-        except Exception as e:
-            current_app.logger.error("solve_time, select sorted_type_id data error")
-            raise e
 
     res_dic = get_mysql_data(date_start, date_end, issue_type_ids)
     return Response(json.dumps(res_dic), mimetype='application/json')
@@ -64,6 +60,9 @@ def get_mysql_data(date_start, date_end, issue_type_ids):
 
 
 def get_res_dic(issue_type_ids, content_data):
+    if not content_data:
+        res_dic = dict()
+        return res_dic
     type_cycle_dic = dict()
     for t_id in issue_type_ids:
         type_cycle_dic.update({t_id: []})
@@ -98,6 +97,5 @@ def get_res_dic(issue_type_ids, content_data):
                 "high_cycle": high_cycle,
             }
             res_dic["data"].append(box_data)
-    res_dic["max_counts"] = max_counts
 
     return res_dic
