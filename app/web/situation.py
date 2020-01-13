@@ -310,7 +310,7 @@ def stamp_2_week(time_stamp):
     # 实践戳 -> 20180803
     str_time = timestamp_to_str(time_stamp)
     year, week = str_2_weeks(str_time)
-    year_week = str(year) + "-" + str(week) + "-" + str(1)
+    year_week = str(year) + "-" + str(week - 1) + "-" + str(1)
     struct_time = time.strptime(year_week, '%Y-%W-%w')
     mon_day = time.strftime("%Y%m%d", struct_time)
     return mon_day

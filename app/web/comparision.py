@@ -31,8 +31,13 @@ def comparision_data(printer_type, issue_type, compare_week):
         final_list = list()
         f_year, f_weeks = str_2_weeks(former_week)
         af_year, af_weeks = str_2_weeks(after_week)
-        former = "{}{}".format(f_year, f_weeks)
-        after = "{}{}".format(af_year, af_weeks)
+
+        if f_weeks < 10:
+            f_weeks = "0" + str(f_weeks)
+        if af_weeks < 10:
+            af_weeks = "0" + str(af_weeks)
+        former = "{}-{}".format(f_year, f_weeks)
+        after = "{}-{}".format(af_year, af_weeks)
         for issue_id in issue_type:
             final_list.append({"week": former, "id": int(issue_id), "value": former_data[int(issue_id)]})
             final_list.append({"week": after, "id": int(issue_id), "value": after_data[int(issue_id)]})
