@@ -21,8 +21,8 @@ def situation():
     time_interval = data["time_interval"] if "time_interval" in data else []
 
     if not printer_type or not issue_type:
-        data = {"status": "failed", "msg": "missing required parameters printer type or issue type"}
-        return Response(json.dumps(data), mimetype='application/json')
+        current_app.logger.error("empty issue type or printer type, return []")
+        return Response(json.dumps([]), mimetype='application/json')
 
     if report_time:
         data = report_data(report_time, printer_type, issue_type)

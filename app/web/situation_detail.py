@@ -24,8 +24,8 @@ def situation_detail():
     length = data["length"]
 
     if not printer_type or not issue_type:
-        data = {"msg": "missing required parameters printer type or issue type"}
-        return Response(json.dumps(data), mimetype='application/json')
+        current_app.logger.error("empty issue type or printer type, return []")
+        return Response(json.dumps([]), mimetype='application/json')
 
     if not isinstance(start, int) or not isinstance(length, int):
         return Response(json.dumps({"msg": "start or length error"}))

@@ -12,8 +12,8 @@ def comparision():
     issue_type = data["issue_type"]  # list   issue id
     compare_week = data["compare_week"]  # [20180203  20180204]
     if not printer_type or not issue_type or not compare_week:
-        data = {"status": "failed", "msg": "missing required parameters printer type or issue type"}
-        return Response(json.dumps(data), mimetype='application/json')
+        current_app.logger.error("printer_type or issue_type error or compare_week error, return []")
+        return Response(json.dumps([]), mimetype='application/json')
 
     data = comparision_data(printer_type, issue_type, compare_week)
     return Response(json.dumps(data), mimetype='application/json')
