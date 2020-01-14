@@ -3,7 +3,7 @@ import json
 from flask import request, Response, current_app
 from sqlalchemy import and_
 from app.models.content import Content
-from app.web.common import str_2_timestamp, str_2_weeks, timestamp_to_str, week_2_day
+from app.web.common import str_2_timestamp, str_2_weeks, timestamp_to_str, week_2_day, id_2_type
 
 
 @web.route('/situation/detail', methods=["POST"])
@@ -22,6 +22,8 @@ def situation_detail():
 
     start = data["start"]
     length = data["length"]
+    key = data["key"]
+    order = data["order"]
 
     if not printer_type or not issue_type:
         current_app.logger.error("empty issue type or printer type, return []")
@@ -31,15 +33,15 @@ def situation_detail():
         return Response(json.dumps({"msg": "start or length error"}))
 
     if report_time:
-        data = report_data(report_time, printer_type, issue_type, start, length)
+        data = report_data(report_time, printer_type, issue_type, start, length, key, order)
         return Response(json.dumps(data), mimetype='application/json')
 
     if produce_time:
-        data = produce_data(produce_time, printer_type, issue_type, start, length)
+        data = produce_data(produce_time, printer_type, issue_type, start, length, key, order)
         return Response(json.dumps(data), mimetype='application/json')
 
     if time_interval:
-        data = interval_data(time_interval, printer_type, issue_type, start, length)
+        data = interval_data(time_interval, printer_type, issue_type, start, length, key, order)
         return Response(json.dumps(data), mimetype='application/json')
 
     res_dic = {"data": "parameters error"}
@@ -74,26 +76,39 @@ def get_real_printer_type(printer_type):
     return sub_printer_type
 
 
-def get_res_data(content, printer_type, start, length):
+def res_sort(res_list, key, order):
+    if order == "desc":
+        new_list = sorted(res_list, key=lambda k: k[key])
+        new_list.reverse()
+        return new_list
+    return sorted(res_list, key=lambda k: k[key])
+
+
+def get_res_data(content, printer_type, start, length, key, order):
     res_list = list()
     sub_printer_type = get_real_printer_type(printer_type)
     for data in content:
         if data.printer_type in sub_printer_type:
+            if not data.issue_type_id or not data.issue_title:
+                continue
+            issue = ''.join(x for x in data.issue_title if ord(x) < 256)
+            issue_type = id_2_type(data.issue_type_id)
             sub_dict = {
                 "as_date": timestamp_to_str(data.as_date) if data.as_date else "",
                 "serial_no": data.serial_no if data.serial_no else "",
-                "issue": data.issue_content if data.issue_content else "",
-                "issue_type": data.issue_type_id if data.issue_type_id else "",
+                "issue": issue,
+                "issue_type": issue_type,
+                "issue_type_id": data.issue_type_id if data.issue_type_id else "",
                 "printer_type": data.printer_type if data.printer_type else "Unknown",
                 "time_internal": data.as_cycle if data.as_cycle else "",
                 "produce_date": week_2_day(data.serial_no) if data.serial_no and len(data.serial_no) == 11 else ""
             }
             res_list.append(sub_dict)
+    final_list = res_sort(res_list, key, order)
+    return {"data": final_list[start: start + length], "sum": len(final_list)}
 
-    return {"data": res_list[start: start + length], "sum": len(res_list)}
 
-
-def interval_data(time_interval, printer_type, issue_type, start, length):
+def interval_data(time_interval, printer_type, issue_type, start, length, key, order):
     try:
         start_year, start_week = str_2_weeks(time_interval[0])
         end_year, end_week = str_2_weeks(time_interval[1])
@@ -110,11 +125,11 @@ def interval_data(time_interval, printer_type, issue_type, start, length):
 
     if not content:
         return []
-    res_list = get_res_data(content, printer_type, start, length)
+    res_list = get_res_data(content, printer_type, start, length, key, order)
     return res_list
 
 
-def produce_data(produce_time, printer_type, issue_type, start, length):
+def produce_data(produce_time, printer_type, issue_type, start, length, key, order):
     try:
         start_year, start_week = str_2_weeks(produce_time[0])
         end_year, end_week = str_2_weeks(produce_time[1])
@@ -130,11 +145,11 @@ def produce_data(produce_time, printer_type, issue_type, start, length):
         raise e
     if not content:
         return []
-    res_list = get_res_data(content, printer_type, start, length)
+    res_list = get_res_data(content, printer_type, start, length, key, order)
     return res_list
 
 
-def report_data(report_time, printer_type, issue_type, start, length):
+def report_data(report_time, printer_type, issue_type, start, length, key, order):
     try:
         start_time = str_2_timestamp(report_time[0])
         end_time = str_2_timestamp(report_time[1])
@@ -149,6 +164,6 @@ def report_data(report_time, printer_type, issue_type, start, length):
 
     if not content:
         return []
-    res_list = get_res_data(content, printer_type, start, length)
+    res_list = get_res_data(content, printer_type, start, length, key, order)
     return res_list
 
