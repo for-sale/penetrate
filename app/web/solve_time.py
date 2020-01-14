@@ -49,8 +49,8 @@ def get_mysql_data(date_start, date_end, issue_type_ids):
         return res_dic
     try:
         content_data = Content.query.filter(Content.issue_type_id.in_(issue_type_ids),
-                                            Content.produce_year * 100 + Content.produce_week > start_compare,
-                                            Content.produce_year * 100 + Content.produce_week < end_compare).all()
+                                            Content.produce_year * 100 + Content.produce_week >= start_compare,
+                                            Content.produce_year * 100 + Content.produce_week <= end_compare).all()
     except Exception as e:
         current_app.logger.error("select solve_time data error, args: issue_type_ids:{}, "
                                  "date_start:{}, date_end:{}".format(issue_type_ids, date_start, date_end))
