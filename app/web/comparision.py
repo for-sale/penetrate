@@ -25,8 +25,11 @@ def comparision_data(printer_type, issue_type, compare_week):
         former_week = compare_week[0]
         after_week = compare_week[1]
 
-        former_data = get_comparision_data(printer_type, issue_type, former_week)
-        after_data = get_comparision_data(printer_type, issue_type, after_week)
+        former_data, former_flag = get_comparision_data(printer_type, issue_type, former_week)
+        after_data, after_flag = get_comparision_data(printer_type, issue_type, after_week)
+
+        if not all([former_flag, after_flag]):
+            return []
 
         final_list = list()
         f_year, f_weeks = str_2_weeks(former_week)
@@ -83,13 +86,15 @@ def get_comparision_data(printer_type, issue_type, compare_week):
     for issue in issue_type:
         res_dict.update({int(issue): 0})
 
+    flag = False
     if content:
         for data in content:
             # 放到同类型下面
             issue_type_id = data.issue_type_id
             if issue_type_id:
+                flag = True
                 res_dict[issue_type_id] += 1
-    return res_dict
+    return res_dict, flag
 
 
 def issue_to_str(issue_type):
