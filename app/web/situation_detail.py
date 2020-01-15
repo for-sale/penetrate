@@ -25,6 +25,9 @@ def situation_detail():
     key = data["key"]
     order = data["order"]
 
+    if not all([length, key, order]):
+        return Response(json.dumps([]), mimetype='application/json')
+
     if not printer_type or not issue_type:
         current_app.logger.error("empty issue type or printer type, return []")
         return Response(json.dumps([]), mimetype='application/json')
