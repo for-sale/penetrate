@@ -100,8 +100,7 @@ def last_few_days(n):
     today = date.today()
     before_day = today - timedelta(days=n)
     start_time = int(time.mktime(time.strptime(str(before_day), '%Y-%m-%d'))) * 1000
-    end_time = int(time.time()) * 1000
-    return start_time, end_time
+    return start_time
 
 
 def get_year_week(t_time):

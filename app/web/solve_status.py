@@ -15,9 +15,9 @@ def solve_status():
         length = 0
     try:
         if int(length):
-            start_time, end_time = last_few_days(int(length))
+            start_time = last_few_days(int(length))
             status_data = db.session.query(Content.status_id, db.func.count(Content.id)).filter(
-                Content.as_date.between(start_time, end_time)).group_by(Content.status_id).all()
+                Content.as_date >= start_time).group_by(Content.status_id).all()
         else:
             status_data = db.session.query(Content.status_id, db.func.count(Content.id)).group_by(
                 Content.status_id).all()
