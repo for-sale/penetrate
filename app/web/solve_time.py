@@ -84,7 +84,7 @@ def get_res_dic(issue_type_ids, content_data):
             total = len(v)
             low_node = v[math.floor(total * 0.2)]
             high_node = v[math.floor(total * 0.8)]
-            average = round(sum(v) / total)
+            average = round(sum(v) / total, 1)
             low_cycle = v[0]
             high_cycle = v[-1]
             max_counts = high_cycle if high_cycle > max_counts else max_counts
