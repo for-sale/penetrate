@@ -2,7 +2,7 @@ from . import web
 import json
 from flask import request, Response, current_app
 from app.models.content import Content
-from app.web.common import str_2_weeks, id_2_type
+from app.web.common import id_2_type
 
 
 @web.route('/comparision', methods=["POST"])
@@ -17,6 +17,12 @@ def comparision():
 
     data = comparision_data(printer_type, issue_type, compare_week)
     return Response(json.dumps(data), mimetype='application/json')
+
+
+def str_2_weeks(str_time):
+    year = str_time[0:4]
+    week = str_time[5:]
+    return int(year), int(week)
 
 
 def comparision_data(printer_type, issue_type, compare_week):
